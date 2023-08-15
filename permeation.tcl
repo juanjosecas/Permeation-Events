@@ -73,8 +73,31 @@ puts "Creating summary"
 puts "+z direction events: $positiveZCount"
 puts "-z direction events: $negativeZCount"
 
+# Calculate collective diffusion coefficient (Dn)
+set cumulativeDisplacements [list]
+foreach z [$wat get z] {
+    lappend cumulativeDisplacements $z
+}
+set poreLength [expr $upperEnd - $lowerEnd]
+foreach idx [array indices cumulativeDisplacements] z $cumulativeDisplacements {
+    set cumulativeDisplacements($idx) [expr $z / $poreLength]
+}
+set sumSquaredDisplacements 0
+foreach z $cumulativeDisplacements {
+    set sumSquaredDisplacements [expr $sumSquaredDisplacements + ($z * $z)]
+}
+set msd [expr $sumSquaredDisplacements / [llength cumulativeDisplacements]]
+set timeInterval 1 ;# Replace with your actual time interval between measurements
+set Dn [expr $msd / (6 * $timeInterval)]
+
+# Calculate osmotic permeation coefficient (Pf)
+set nw  ;# Replace with your molar water volume
+set Pf [expr $nw * $Dn]
+
 # Open summary file and write the count of events in both directions
 set summaryFile [open $filename2 w+]
 puts $summaryFile "+z -z"
 puts $summaryFile "$positiveZCount $negativeZCount"
+puts $summaryFile "Collective Diffusion Coefficient (Dn): $Dn"
+puts $summaryFile "Osmotic Permeation Coefficient (Pf): $Pf"
 close $summaryFile
